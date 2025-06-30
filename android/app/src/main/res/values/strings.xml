@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Smishing</string>
+    <string name="incoming_sms_messages">Incoming SMS Messages</string>
+</resources>
