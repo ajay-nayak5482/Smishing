@@ -22,7 +22,7 @@ NAME_DATASET2 = 'dataset2.csv'
 NAME_DATASET3 = 'dataset3.csv'
 STOP_WORDS = set()
 analyzer = None
-
+warnings.filterwarnings('ignore') # Suppress warnings for cleaner output
 # Define common phishing/spam keywords (expand this list significantly for real project)
 PHISHING_KEYWORDS = [
     'account', 'verify', 'update', 'security', 'password', 'login', 'click',
