@@ -1,0 +1,2 @@
+"original_text","perturbed_text","original_score","perturbed_score","original_output","perturbed_output","ground_truth_output","num_queries","result_type"
+"missed [[call]] alert numbers called left [[message]]","missed [[drew]] alert numbers called left [[transmissions]]",0.3865765333175659,0.5443780422210693,1,0,1,91,"Successful"

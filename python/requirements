@@ -7,4 +7,6 @@ wordcloud
 seaborn
 transformers
 tensorflow
+tensorflow_hub
 tf-keras
+textattack
