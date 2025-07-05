@@ -1,71 +1,46 @@
-graph TD
-    subgraph Phase 1: Data Ingestion & Initial Preparation
-        A[Raw SMS Datasets] --> B(Data Ingestion & Unification)
-        B --> C(Data Cleaning & Initial Feature Engineering)
-        C --> D{Cleaned & Engineered Dataset}
+```mermaid
+    graph LR
+    subgraph Input Layers
+        A[input_ids] --> B
+        C[attention_mask] --> B
+        D[structured_features_input] --> E
     end
 
-    subgraph Phase 2: Data Preprocessing for Model Input
-        D --> E(Data Splitting & Final Transformation)
-        E --> F1[Text Input (input_ids, attention_mask)]
-        E --> F2[Structured Input]
-        E --> F3[Target Labels]
+    subgraph Textual Branch
+        B(TFDistilBertModel) --> F[CLS Token Embedding]
+        F -- Dropout (0.2) --> G
     end
 
-    subgraph Phase 3: Initial Hybrid Model Training (Baseline Defender)
-        F1 & F2 & F3 --> G(Hybrid Model Architecture Definition)
-        G --> H[Initial Hybrid Model Architecture]
-        H --> I(Initial Model Training)
-        I --> J{Trained Baseline Model}
-        I --> K{Initial Training History}
+    subgraph Structured Features Branch
+        E(Dense - 128, ReLU) -- Dropout (0.2) --> H
+        H --> I(Dense - 64, ReLU)
+        I -- Dropout (0.2) --> J
     end
 
-    subgraph Phase 4: Iterative Adversarial Training Loop (Robustness Enhancement)
-        J -- Start Loop (Current Model) --> L(Iteration X)
-        L --> M(Adversarial Example Generation)
-        M --> N{New Adversarial Examples}
-        N & P_data[Original Training Data] --> O(Data Augmentation)
-        O --> P(Model Fine-tuning)
-        P --> Q{Updated Robust Model}
-        Q & R_data[Original Test Data] --> S(Robustness Evaluation)
-        S --> T{Clean & Adversarial Accuracy History}
-        Q -- Loop Back --> L
+    subgraph Fusion & Output
+        G & J -- Concatenate --> K[Combined Features]
+        K --> L(Dense - 64, ReLU)
+        L -- Dropout (0.3) --> M
+        M --> N(Dense - 1, Sigmoid)
+        N --> O[Phishing Probability]
     end
 
-    subgraph Phase 5: Final Model Export & Deployment Preparation
-        Q -- Final Iteration --> U(Final Model Export & Conversion)
-        U --> V[Final Robust Model (.keras)]
-        U --> W[Final Robust Model (.tflite)]
-    end
-
-    %% Node Styling
+    %% Node Styling (consistent with previous workflow)
     style A fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
+    style C fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
+    style D fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
+
     style B fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style C fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style D fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+    style F fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+    style G fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
 
     style E fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style F1 fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style F2 fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style F3 fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-
-    style G fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style H fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
+    style H fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
     style I fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
     style J fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+
     style K fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-
     style L fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style M fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style N fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style O fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style P fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style Q fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style S fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style T fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style P_data fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
-    style R_data fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
-
-    style U fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style V fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style W fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+    style M fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+    style N fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
+    style O fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
