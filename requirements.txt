@@ -1,0 +1,17 @@
+
+    # Core ML/NLP libraries
+    tensorflow
+    transformers
+    textattack
+
+    # Data handling and scientific computing
+    pandas
+    scikit-learn
+    numpy
+    matplotlib
+    seaborn
+    tldextract
+    nltk
+    wordcloud
+    pyarrow
+    tensorflow_hub
