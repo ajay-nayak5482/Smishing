@@ -1,3 +1,4 @@
+<!-- res/values-night/themes.xml -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.Smishing" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
@@ -10,7 +11,19 @@
         <item name="colorSecondaryVariant">@color/teal_200</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+
+        <!-- Text color settings for dark mode -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">#E0E0E0</item>
     </style>
+
+    <!-- Additional colors for use in layouts -->
+    <color name="phishing_background">#4A3733</color>
+    <color name="safe_background">#2E3E30</color>
+    <color name="red">#E53935</color>
+    <color name="green">#4CAF50</color>
+    <color name="darker_gray">#BDBDBD</color>
+
 </resources>

@@ -1,6 +1,7 @@
+<!-- res/values/themes.xml -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.Smishing" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.Smishing" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
@@ -10,7 +11,19 @@
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+
+        <!-- Text color settings -->
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColorSecondary">@color/darker_gray</item>
     </style>
+
+    <!-- Additional colors for use in layouts -->
+    <color name="phishing_background">#FBE5D8</color>
+    <color name="safe_background">#E8F5E9</color>
+    <color name="red">#E53935</color>
+    <color name="green">#4CAF50</color>
+    <color name="darker_gray">#424242</color>
+
 </resources>

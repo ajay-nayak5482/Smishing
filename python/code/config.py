@@ -1,20 +1,22 @@
 import os
+import json
+
 
 # --- Model Configuration ---
 TRANSFORMER_MODEL_NAME = 'distilbert-base-uncased'
-MAX_LEN = 64 # Reverted to 128 for speed
+MAX_LEN = 192 # Reverted to 128 for speed
 DISTILBERT_HIDDEN_SIZE = 768 # DistilBERT's hidden size remains 768
 
 # --- Training Parameters ---
 INITIAL_LEARNING_RATE = 2e-5
-INITIAL_EPOCHS = 5
+INITIAL_EPOCHS = 20
 BATCH_SIZE = 32
 
 # --- Adversarial Training Parameters ---
-NUM_ADVERSARIAL_ITERATIONS = 5
-NUM_ATTACKS_PER_ITERATION = 50 # Number of adversarial examples to generate per iteration
-ADVERSARIAL_LEARNING_RATE = 1e-5 # Slightly lower LR for fine-tuning during adversarial training
-EPOCHS_PER_ADVERSARIAL_ITERATION = 2 # Fewer epochs per fine-tuning step
+NUM_ADVERSARIAL_ITERATIONS = 10
+NUM_ATTACKS_PER_ITERATION = MAX_LEN # Number of adversarial examples to generate per iteration
+ADVERSARIAL_LEARNING_RATE = 2e-5 # Slightly lower LR for fine-tuning during adversarial training
+EPOCHS_PER_ADVERSARIAL_ITERATION = 5 # Fewer epochs per fine-tuning step
 
 # --- Data Features ---
 TEXT_FEATURE = 'sms_content_cleaned_for_nlp'
@@ -50,7 +52,6 @@ UNIFIED_DATA_PATH = os.path.join(DATA_DIR, 'unified_phishing_sms_dataset_process
 INITIAL_MODEL_PATH = os.path.join(MODEL_DIR, 'initial_hybrid_model.keras')
 ROBUST_MODEL_PREFIX = os.path.join(MODEL_DIR, 'robust_hybrid_model_iteration_') # Suffix with iteration number
 FINAL_ROBUST_MODEL_PATH = os.path.join(MODEL_DIR, 'final_robust_hybrid_model.keras')
-FINAL_TFLITE_MODEL_PATH = os.path.join(EXPORTED_MODEL_DIR, 'final_robust_hybrid_model.tflite')
 
 # Adversarial examples checkpoints
 ADVERSARIAL_EXAMPLES_DIR = os.path.join(DATA_DIR, 'adversarial_examples')
@@ -58,6 +59,7 @@ ADVERSARIAL_EXAMPLES_PREFIX = os.path.join(ADVERSARIAL_EXAMPLES_DIR, 'adv_exampl
 
 # Training history/metrics
 TRAINING_HISTORY_PATH = os.path.join(MODEL_DIR, 'training_history.json')
+INITIAL_TRAINING_HISOTRY_PATH = os.path.join(MODEL_DIR, 'initial_training_history.json')
 
 # Plot saving paths
 PLOTS_DIR = os.path.join(MODEL_DIR, 'plots')
@@ -67,6 +69,7 @@ TRAINING_ACC_LOSS_PLOT_PATH = os.path.join(PLOTS_DIR, 'training_acc_loss.png')
 ADVERSARIAL_ACC_HISTORY_PLOT_PATH = os.path.join(PLOTS_DIR, 'adversarial_acc_history.png')
 
 # Exported Android assets paths
+FINAL_TFLITE_MODEL_PATH = os.path.join(EXPORTED_MODEL_DIR, 'final_robust_hybrid_model.tflite')
 ANDROID_VOCAB_PATH = os.path.join(EXPORTED_MODEL_DIR, 'vocab.txt')
 ANDROID_SCALER_PARAMS_PATH = os.path.join(EXPORTED_MODEL_DIR, 'scaler_params.json')
 ANDROID_ENCODER_PARAMS_PATH = os.path.join(EXPORTED_MODEL_DIR, 'encoder_params.json')
@@ -130,3 +133,46 @@ PHISHING_KEYWORDS = [
     "upgrade system", "install app", "download program", "virus alert", "malware detected",
     "trojan warning", "ransomware threat", "exploit vulnerability", "data breach detected"
 ]
+
+class TrainingHistory:
+    def __init__(self, total_epochs: int, epochs_already_trained: int):
+        self.total_epochs = total_epochs
+        self.epochs_already_trained = epochs_already_trained
+
+    def remaining_epochs(self) -> int:
+        """Return number of epochs left to train."""
+        return max(0, self.total_epochs - self.epochs_already_trained)
+
+    def save_to_json(self, path: str = INITIAL_TRAINING_HISOTRY_PATH):
+        """Save the training history to JSON file, creating folder if needed."""
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        data = {
+            "total_epochs": self.total_epochs,
+            "epochs_already_trained": self.epochs_already_trained
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+        print(f"Training history saved to {path}")
+
+    @classmethod
+    def load_from_json(cls, path: str = INITIAL_TRAINING_HISOTRY_PATH):
+        """Load TrainingHistory object from JSON file."""
+        if not os.path.exists(path):
+            history = cls(total_epochs=INITIAL_EPOCHS, epochs_already_trained=0)
+            history.save_to_json(path) # Create file with default values
+            return history
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return cls(
+            total_epochs=data.get("total_epochs", 0),
+            epochs_already_trained=data.get("epochs_already_trained", 0)
+        )
+
+INITIAL_TRAINING_HISOTRY = TrainingHistory.load_from_json()
+print(f"Initial training history loaded: {INITIAL_TRAINING_HISOTRY.total_epochs} total epochs, "
+      f"{INITIAL_TRAINING_HISOTRY.epochs_already_trained} epochs already trained.")
+if(INITIAL_TRAINING_HISOTRY.total_epochs < INITIAL_EPOCHS):
+    INITIAL_TRAINING_HISOTRY.total_epochs = INITIAL_EPOCHS    
+    print(f"Remaining epochs to train: {INITIAL_TRAINING_HISOTRY.remaining_epochs()}")
+
+

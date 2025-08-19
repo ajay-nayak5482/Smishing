@@ -1,0 +1,18 @@
+# Python 3.10 compatible versions
+
+# Core ML/NLP libraries
+tensorflow==2.10.0
+transformers==4.21.3 # Updated to satisfy textattack's dependency (>=4.21.0)
+textattack==0.3.8
+
+# Data handling and scientific computing
+pandas==1.5.3
+scikit-learn==1.2.2
+numpy==1.23.5
+matplotlib==3.7.1
+seaborn==0.12.2
+tldextract==3.4.0
+nltk==3.8.1
+wordcloud==1.9.2
+pyarrow==10.0.1
+tensorflow_hub==0.13.0

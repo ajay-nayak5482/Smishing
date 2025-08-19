@@ -12,7 +12,8 @@ from config import (
     ROBUST_MODEL_PREFIX, FINAL_ROBUST_MODEL_PATH, FINAL_TFLITE_MODEL_PATH,
     TRAINING_HISTORY_PATH, PLOTS_DIR, ADVERSARIAL_ACC_HISTORY_PLOT_PATH,
     ANDROID_VOCAB_PATH, ANDROID_SCALER_PARAMS_PATH,
-    ANDROID_ENCODER_PARAMS_PATH, ANDROID_FEATURE_ORDER_PATH, EXPORTED_MODEL_DIR
+    ANDROID_ENCODER_PARAMS_PATH, ANDROID_FEATURE_ORDER_PATH, EXPORTED_MODEL_DIR,
+    INITIAL_TRAINING_HISOTRY
 )
 from model_architecture import ModelConfig, build_and_train_hybrid_model
 from adversarial_utils import HybridModelTextAttackWrapper, generate_adversarial_data
@@ -60,22 +61,22 @@ def run_adversarial_training_loop(
         start_iteration = 0
     
     # Initial evaluation on clean test set if not already recorded (only if starting fresh)
-    if start_iteration == 0:
-        print("\n--- Initial Evaluation on Clean Test Set ---")
-        # Process clean test data for evaluation inputs
-        test_input_ids_clean, test_attention_mask_clean = tokenize_text(X_test_clean_df[TEXT_FEATURE], tokenizer, MAX_LEN)
-        X_test_structured_processed_clean = preprocessor.transform(X_test_clean_df).toarray()
-        X_test_structured_processed_clean = tf.constant(X_test_structured_processed_clean, dtype=tf.float32)
+    # if start_iteration == 0:
+    print("\n--- Initial Evaluation on Clean Test Set ---")
+    # Process clean test data for evaluation inputs
+    test_input_ids_clean, test_attention_mask_clean = tokenize_text(X_test_clean_df[TEXT_FEATURE], tokenizer, MAX_LEN)
+    X_test_structured_processed_clean = preprocessor.transform(X_test_clean_df).toarray()
+    X_test_structured_processed_clean = tf.constant(X_test_structured_processed_clean, dtype=tf.float32)
 
-        initial_test_inputs = {
-            'input_ids': test_input_ids_clean,
-            'attention_mask': test_attention_mask_clean,
-            'structured_features_input': X_test_structured_processed_clean
-        }
-        initial_loss, initial_accuracy, initial_precision, initial_recall = current_model.evaluate(initial_test_inputs, y_test_clean_tf, verbose=0)
-        print(f"Initial Clean Test Accuracy: {initial_accuracy:.4f}")
-        clean_test_accuracy_history.append(initial_accuracy)
-        adversarial_test_accuracy_history.append(0.0) # Placeholder for initial adversarial accuracy
+    initial_test_inputs = {
+        'input_ids': test_input_ids_clean,
+        'attention_mask': test_attention_mask_clean,
+        'structured_features_input': X_test_structured_processed_clean
+    }
+    initial_loss, initial_accuracy, initial_precision, initial_recall = current_model.evaluate(initial_test_inputs, y_test_clean_tf, verbose=0)
+    print(f"Initial Clean Test Accuracy: {initial_accuracy:.4f}")
+    clean_test_accuracy_history.append(initial_accuracy)
+    adversarial_test_accuracy_history.append(0.0) # Placeholder for initial adversarial accuracy
 
     for i in range(start_iteration, NUM_ADVERSARIAL_ITERATIONS):
         print(f"\n--- Adversarial Training Iteration {i+1}/{NUM_ADVERSARIAL_ITERATIONS} ---")
@@ -147,8 +148,9 @@ def run_adversarial_training_loop(
             transformer_model_name=TRANSFORMER_MODEL_NAME,
             max_len=MAX_LEN,
             learning_rate=ADVERSARIAL_LEARNING_RATE,
-            epochs=EPOCHS_PER_ADVERSARIAL_ITERATION,
-            batch_size=BATCH_SIZE,
+            epochs=INITIAL_TRAINING_HISOTRY.epochs_already_trained + EPOCHS_PER_ADVERSARIAL_ITERATION,
+            epochs_already=INITIAL_TRAINING_HISOTRY.epochs_already_trained,  # Reset epochs for fine-tuning
+            batch_size=BATCH_SIZE,            
             train_input_ids=train_input_ids_aug,
             train_attention_mask=train_attention_mask_aug,
             X_train_structured_processed=X_train_structured_processed_aug,
@@ -168,8 +170,9 @@ def run_adversarial_training_loop(
         iteration_model_path = f"{ROBUST_MODEL_PREFIX}{i+1}.keras"
         
         # Build and train, saving the best model for this iteration
-        new_model_instance, _ = build_and_train_hybrid_model(finetune_config, preprocessor_obj=preprocessor, tokenizer_obj=tokenizer, save_model=True, model_save_path=iteration_model_path)
+        new_model_instance, _ = build_and_train_hybrid_model(finetune_config, preprocessor_obj=preprocessor, tokenizer_obj=tokenizer, save_model=True, model_save_path=iteration_model_path, trained_model=current_model)
         current_model = new_model_instance # Update current_model for next iteration
+        INITIAL_TRAINING_HISOTRY.epochs_already_trained += EPOCHS_PER_ADVERSARIAL_ITERATION # Update epochs already trained
 
         # 4. Evaluate robustness on a fresh set of adversarial examples from the test set
         print(f"Evaluating robustness on adversarial test set (Iteration {i+1})...")
@@ -231,8 +234,8 @@ def run_adversarial_training_loop(
     converter = tf.lite.TFLiteConverter.from_keras_model(current_model)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
     converter.target_spec.supported_ops = [
-        tf.lite.OpsSet.TFLITE_BUILTINS,
-        tf.lite.OpsSet.SELECT_TF_OPS
+        tf.lite.OpsSet.TFLITE_BUILTINS
+        ,tf.lite.OpsSet.SELECT_TF_OPS
     ]
     tflite_model = converter.convert()
 
@@ -241,17 +244,19 @@ def run_adversarial_training_loop(
         f.write(tflite_model)
     print(f"Final robust model converted to TensorFlow Lite and saved as '{FINAL_TFLITE_MODEL_PATH}'")
 
-    """# Export preprocessing assets for Android
+    # Export preprocessing assets for Android
     print("\n--- Exporting Preprocessing Assets for Android ---")
     # 1. Export Tokenizer Vocabulary
-    tokenizer.save_vocabulary(ANDROID_VOCAB_PATH)
+    # vocab_dir = os.path.dirname(ANDROID_VOCAB_PATH)
+    # os.makedirs(vocab_dir, exist_ok=True)
+    tokenizer.save_vocabulary(EXPORTED_MODEL_DIR)
     print(f"Tokenizer vocabulary saved to {ANDROID_VOCAB_PATH}")
 
     # 2. Export StandardScaler parameters (mean and scale)
     scaler_params = {
-        'mean': preprocessor.named_transformers['num'].mean_.tolist(),
-        'scale': preprocessor.named_transformers['num'].scale_.tolist(),
-        'feature_names_in': preprocessor.named_transformers['num'].feature_names_in_.tolist()
+        'mean': preprocessor.named_transformers_['num'].mean_.tolist(),
+        'scale': preprocessor.named_transformers_['num'].scale_.tolist(),
+        'feature_names_in': preprocessor.named_transformers_['num'].feature_names_in_.tolist()
     }
     with open(ANDROID_SCALER_PARAMS_PATH, 'w') as f:
         json.dump(scaler_params, f)
@@ -259,8 +264,8 @@ def run_adversarial_training_loop(
 
     # 3. Export OneHotEncoder categories
     encoder_params = {
-        'categories': [cat.tolist() for cat in preprocessor.named_transformers['cat'].categories_],
-        'feature_names_out': preprocessor.named_transformers['cat'].get_feature_names_out().tolist()
+        'categories': [cat.tolist() for cat in preprocessor.named_transformers_['cat'].categories_],
+        'feature_names_out': preprocessor.named_transformers_['cat'].get_feature_names_out().tolist()
     }
     with open(ANDROID_ENCODER_PARAMS_PATH, 'w') as f:
         json.dump(encoder_params, f)
@@ -271,5 +276,5 @@ def run_adversarial_training_loop(
     with open(ANDROID_FEATURE_ORDER_PATH, 'w') as f:
         json.dump(final_structured_feature_order, f)
     print(f"Structured feature order saved to {ANDROID_FEATURE_ORDER_PATH}")
-    """
+    
     return current_model, clean_test_accuracy_history, adversarial_test_accuracy_history

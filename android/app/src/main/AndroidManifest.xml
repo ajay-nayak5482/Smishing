@@ -6,8 +6,8 @@ package="com.ajay.smishing">
         android:name="android.hardware.telephony"
         android:required="false" />
 
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
 
 <application
     android:icon="@mipmap/ic_launcher"
@@ -16,8 +16,7 @@ package="com.ajay.smishing">
     android:supportsRtl="true"
     android:theme="@style/Theme.Smishing">
 
-    <activity
-        android:name=".MainActivity"
+    <activity android:name=".MainActivity"
         android:exported="true">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
@@ -25,11 +24,16 @@ package="com.ajay.smishing">
         </intent-filter>
     </activity>
 
+    <activity
+        android:name=".DetailActivity"
+        android:exported="false">
+    </activity>
+
     <receiver
         android:name=".SmsReceiver"
         android:permission="android.permission.BROADCAST_SMS"
         android:exported="true">
-        <intent-filter android:priority="999"> <!-- High priority to receive before other apps -->
+        <intent-filter android:priority="1"> <!-- High priority to receive before other apps -->
             <action android:name="android.provider.Telephony.SMS_RECEIVED" />
         </intent-filter>
     </receiver>
