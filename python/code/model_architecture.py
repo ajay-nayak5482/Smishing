@@ -26,7 +26,8 @@ class ModelConfig:
     transformer_model_name: str
     max_len: int
     learning_rate: float
-    epochs: int
+    epochs: int    
+    epochs_already: int
     batch_size: int
     
     # Training data
@@ -90,7 +91,7 @@ class DistilBertKerasModel(tf.keras.Model):
             cleaned_name = re.sub(r'tf_distil_bert_model(_\d+)?/', '', cleaned_name)
             pretrained_name_to_value[cleaned_name] = pretrained_weight_values[i]
 
-        print("\n--- Attempting to load pre-trained weights by name and adapt for MAX_LEN ---")
+        print("\n--- from model_architecture.py Attempting to load pre-trained weights by name and adapt for MAX_LEN ---")
 
         for new_weight_var in new_model_weight_variables:
             cleaned_new_name = re.sub(r':0$', '', new_weight_var.name)
@@ -140,7 +141,7 @@ class DistilBertKerasModel(tf.keras.Model):
         return cls(config["model_name"], config["max_len"])
 
 
-def build_and_train_hybrid_model(config: ModelConfig, preprocessor_obj=None, tokenizer_obj=None, save_model=True, model_save_path=None):
+def build_and_train_hybrid_model(config: ModelConfig, preprocessor_obj=None, tokenizer_obj=None, save_model=True, model_save_path=None, trained_model=None):
     """
     Builds, compiles, trains, and evaluates the hybrid SMS phishing detection model.
     Added `save_model` flag to control saving/TFLite conversion.
@@ -181,11 +182,14 @@ def build_and_train_hybrid_model(config: ModelConfig, preprocessor_obj=None, tok
 
     # Create the Hybrid Model
     model = Model(inputs=[input_ids, attention_mask, structured_features_input], outputs=output)
-
+    if trained_model is not None:
+        print("\n--- Loading Weights from Provided Trained Model ---")
+        # If a trained model is provided, use its inputs and outputs        
+        model.set_weights(trained_model.get_weights())    
     print("\n--- Compiling Model ---")
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=config.learning_rate),
-                  loss='binary_crossentropy',
-                  metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()])
+                loss='binary_crossentropy',                  
+                metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()])
 
     model.summary()
 
@@ -219,7 +223,7 @@ def build_and_train_hybrid_model(config: ModelConfig, preprocessor_obj=None, tok
             filepath=model_save_path,
             monitor='val_accuracy',
             save_best_only=True,
-            mode='max',
+            mode='max',            
             verbose=1
         )
         callbacks.append(checkpoint_callback)
@@ -230,6 +234,7 @@ def build_and_train_hybrid_model(config: ModelConfig, preprocessor_obj=None, tok
         config.y_train,
         validation_data=(val_inputs, config.y_val),
         epochs=config.epochs,
+        initial_epoch=config.epochs_already,
         batch_size=config.batch_size,
         class_weight=class_weights_dict,
         callbacks=callbacks # Add the checkpoint callback here

@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20.0"
+    android:viewportHeight="20.0"
+    android:tint="?attr/colorControlNormal"
+    tools:ignore="ExtraText">  <!-- Or use a specific color like #FF00FF00 for green -->
+
+    <path
+        android:fillColor="@android:color/white"
+    android:pathData="M9,16.17L4.83,12l-1.42,1.41L9,19 21,7l-1.41,-1.41L9,16.17z"/>
+</vector>

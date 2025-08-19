@@ -216,7 +216,7 @@ def integrate_and_preprocess_datasets(
     # Load Dataset 1 (assuming it's tab-separated based on previous code)
     try:
         # Assuming dataset1.csv has no header and is tab-separated as per earlier code
-        df1 = pd.read_csv(file_path_d1, sep='\t', header=None, names=['v1', 'v2'], encoding='latin-1')
+        df1 = pd.read_csv(file_path_d1, encoding='latin-1')
         df1['dataset_source'] = 'D1'
         print(f"Dataset 1 loaded: {len(df1)} rows.")
     except FileNotFoundError:
@@ -244,6 +244,7 @@ def integrate_and_preprocess_datasets(
     # --- 1. Harmonize Labels and Rename Columns ---
     print("Harmonizing labels and renaming columns...")
     unified_df1 = df1.copy()
+    print(unified_df1.head(1))
     unified_df1[TARGET_FEATURE] = unified_df1['v1'].apply(lambda x: 1 if x.lower() == 'spam' else 0)
     unified_df1 = unified_df1.rename(columns={'v2': 'sms_content'})[['sms_content', TARGET_FEATURE, 'dataset_source']]
 
@@ -322,6 +323,7 @@ def integrate_and_preprocess_datasets(
     final_df3 = df3_processed.reindex(columns=all_possible_cols)
 
     unified_dataset = pd.concat([final_df1, final_df2, final_df3], ignore_index=True)
+    
 
     # --- 3. Handling Missing Values (Initial Pass) ---
     print("Handling initial missing values...")
@@ -502,9 +504,13 @@ def plot_training_history(history, save_path=None):
     plt.legend()
 
     plt.tight_layout()
+    
     if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path)
         print(f"Training history plot saved to {save_path}")
+
+
     plt.show()
     plt.close()
 

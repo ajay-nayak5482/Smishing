@@ -1,3 +1,5 @@
+# adversarial_utils.py
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -69,7 +71,7 @@ def generate_adversarial_data(model_wrapper, tokenizer, preprocessor, X_source_d
         num_attacks_to_generate (int): The maximum number of successful adversarial examples to generate.
 
     Returns:
-        tuple: (list of adversarial texts, list of original structured feature DataFrames, list of original labels).
+        tuple: (list of adversarial texts, list of original structured feature Dataframes, list of original labels).
     """
     checkpoint_file = f"{ADVERSARIAL_EXAMPLES_PREFIX}{iteration_num}.pkl"
 
@@ -106,17 +108,14 @@ def generate_adversarial_data(model_wrapper, tokenizer, preprocessor, X_source_d
         for idx, row in X_phishing_sampled.iterrows()
     ])
 
-    # Build the TextFooler attack recipe
     attack = recipes.TextFoolerJin2019.build(model_wrapper)
 
-    # Configure TextAttack arguments
     attack_args = AttackArgs(
         num_examples=len(textattack_dataset),
         log_to_csv=os.path.join(ADVERSARIAL_EXAMPLES_DIR, f"log_textattack_iter_{iteration_num}.csv"), # Save detailed log
         disable_stdout=True # Suppress TextAttack's verbose stdout during progress
     )
 
-    # Create and run the attacker
     attacker = Attacker(attack, textattack_dataset, attack_args)
     results = attacker.attack_dataset()
 
@@ -124,41 +123,33 @@ def generate_adversarial_data(model_wrapper, tokenizer, preprocessor, X_source_d
     adversarial_original_structured_features_df_list = []
     adversarial_labels = []
 
+    # --- MODIFICATION START ---
+    # Process the results more robustly to extract successful attacks
     for i, result in enumerate(results):
-        if result.perturbed_result: # If an adversarial example was successfully found
-            # Extract original and perturbed information
-            original_text = result.original_result.attacked_text.text
-            perturbed_text = result.perturbed_result.attacked_text.text
-            original_score = result.original_result.score # Probability of original class
-            perturbed_score = result.perturbed_result.score # Probability of perturbed class
-
-            # TextAttack scores are often for the original class. Convert to [prob_class_0, prob_class_1] if needed.
-            # The wrapper already returns [1-p, p], so original_score/perturbed_score are already 2-element arrays.
-            original_pred_class = np.argmax(original_score)
-            perturbed_pred_class = np.argmax(perturbed_score)
-
-            # A successful attack for phishing means original was phishing (1) and perturbed is misclassified as ham (0)
-            is_successful_attack = (original_pred_class == 1 and perturbed_pred_class == 0)
-
-            if is_successful_attack:
-                # Get the original row from X_source_data_df that corresponds to this result
-                # The order of results from TextAttack corresponds to the order in textattack_dataset
-                # sampled_phishing_indices[i] gives the original index label from X_source_data_df
-                original_row_idx = sampled_phishing_indices[i]
-                # Extract all features *except* the text feature for structured part
-                original_structured_features_for_this_sms = X_source_data_df.loc[[original_row_idx]].drop(columns=[TEXT_FEATURE])
-                
-                adversarial_texts.append(perturbed_text)
-                adversarial_original_structured_features_df_list.append(original_structured_features_for_this_sms)
-                adversarial_labels.append(1) # Adversarial example of a phishing message still has ground truth 1
-        # else:
-        #     # Optionally log failed/skipped attacks if needed for debugging
-        #     pass
-
+        if result.perturbed_text() is not None:
+            # This is a successful attack if the perturbed text exists
+            original_text = result.original_text()
+            perturbed_text = result.perturbed_text()
+            original_label = result.original_result.ground_truth_output
+            
+            # The order of results from TextAttack corresponds to the order in textattack_dataset
+            original_row_idx = sampled_phishing_indices[i]
+            original_structured_features_for_this_sms = X_source_data_df.loc[[original_row_idx]].drop(columns=[TEXT_FEATURE])
+            
+            adversarial_texts.append(perturbed_text)
+            adversarial_original_structured_features_df_list.append(original_structured_features_for_this_sms)
+            adversarial_labels.append(original_label) # Adversarial example keeps its original label
+            
+            # Print success message for visibility
+            print(f"  SUCCESS! Original: '{original_text}' -> Adversarial: '{perturbed_text}'")
+    # --- MODIFICATION END ---
+    
     print(f"Generated {len(adversarial_texts)} successful adversarial examples.")
     
     # Save generated adversarial examples to checkpoint
     if adversarial_texts: # Only save if examples were generated
+        # Ensure ADVERSARIAL_EXAMPLES_DIR exists
+        os.makedirs(ADVERSARIAL_EXAMPLES_DIR, exist_ok=True)
         data_to_save = (adversarial_texts, adversarial_original_structured_features_df_list, adversarial_labels)
         pd.to_pickle(data_to_save, checkpoint_file)
         print(f"Saved adversarial examples to checkpoint: {checkpoint_file}")
