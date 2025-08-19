@@ -1,3 +1,2 @@
 *__pycache__*
-python\model\*_iteration*
-python\model\*.keras
+python/model/*.keras
