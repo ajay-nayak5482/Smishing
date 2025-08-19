@@ -1,3 +1,2 @@
 *__pycache__*
-*robust_hybrid_model_iteration*
- python/model/*.keras
+python/model/*.keras
