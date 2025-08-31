@@ -1,72 +1,91 @@
-```mermaid
-graph TD
-    subgraph Phase 1: Data Ingestion & Initial Preparation
-        A[Raw SMS Datasets] --> B(Data Ingestion & Unification)
-        B --> C(Data Cleaning & Initial Feature Engineering)
-        C --> D{Cleaned & Engineered Dataset}
-    end
+# Smishing Detection Project
 
-    subgraph Phase 2: Data Preprocessing for Model Input
-        D --> E(Data Splitting & Final Transformation)
-        E --> F1[Text Input: IDs & Mask]
-        E --> F2[Structured Input]
-        E --> F3[Target Labels]
-    end
+This project focuses on detecting smishing (SMS phishing) using machine learning and adversarial training techniques.
 
-    subgraph Phase 3: Initial Hybrid Model Training - Baseline Defender
-        F1 & F2 & F3 --> G(Hybrid Model Architecture Definition)
-        G --> H[Initial Hybrid Model Architecture]
-        H --> I(Initial Model Training)
-        I --> J{Trained Baseline Model}
-        I --> K{Initial Training History}
-    end
+# 1. Python Project
+## Project Structure
+- `code/` : Source code for data preparation, model architecture, adversarial training, and main scripts.
+- `data/` : Raw and processed datasets, adversarial examples, and logs.
+- `model/` : Exported models and related files.
+- `plots/` : Training and evaluation plots.
+- `requirements.txt` : Python dependencies for the project.
 
-    subgraph Phase 4: Iterative Adversarial Training Loop - Robustness Enhancement
-        J -- Start Loop - Current Model --> L(Iteration X)
-        L --> M(Adversarial Example Generation)
-        M --> N{New Adversarial Examples}
-        N & P_data[Original Training Data] --> O(Data Augmentation)
-        O --> P(Model Fine-tuning)
-        P --> Q{Updated Robust Model}
-        Q & R_data[Original Test Data] --> S(Robustness Evaluation)
-        S --> T{Clean & Adversarial Accuracy History}
-        Q -- Loop Back --> L
-    end
+## Development Environment Setup
 
-    subgraph Phase 5: Final Model Export & Deployment Preparation
-        Q -- Final Iteration --> U(Final Model Export & Conversion)
-        U --> V[Final Robust Model - .keras]
-        U --> W[Final Robust Model - .tflite]
-    end
+### 1. Install Python 3.9.23
+Ensure you have Python 3.9.23 installed on your system. You can download it from the [official Python website](https://www.python.org/downloads/release/python-3923/).
 
-    %% Node Styling
-    style A fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
-    style B fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style C fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style D fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+### 2. Create a Virtual Environment
+It is recommended to use a virtual environment named `smishing_env` to manage dependencies.
 
-    style E fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style F1 fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style F2 fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style F3 fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+Open PowerShell and run:
+```powershell
+python -m venv smishing_env
+```
 
-    style G fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style H fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
-    style I fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style J fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style K fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+### 3. Activate the Virtual Environment
+- **Windows (PowerShell):**
+  ```powershell
+  .\smishing_env\Scripts\Activate.ps1
+  ```
+- **Windows (Command Prompt):**
+  ```cmd
+  .\smishing_env\Scripts\activate.bat
+  ```
+- **Linux/MacOS:**
+  ```bash
+  source smishing_env/bin/activate
+  ```
 
-    style L fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style M fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style N fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style O fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style P fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style Q fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style S fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style T fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style P_data fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
-    style R_data fill:#FFDDC1,stroke:#E67E22,stroke-width:2px;
+### 4. Upgrade pip (Recommended)
+```powershell
+python -m pip install --upgrade pip
+```
 
-    style U fill:#D4EDDA,stroke:#28A745,stroke-width:2px;
-    style V fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
-    style W fill:#ADD8E6,stroke:#3498DB,stroke-width:2px;
+### 5. Install Project Dependencies
+Install all required packages using the provided `requirements.txt` file:
+```powershell
+pip install -r python/requirements.txt
+```
+
+# 2. Android Project
+## Project Structure
+- `android/` : Main Android project directory
+  - `app/` : Application module (source code, resources, manifest)
+  - `build.gradle` : Project-level Gradle build file
+  - `gradle.properties` : Gradle configuration properties
+  - `gradlew`, `gradlew.bat` : Gradle wrapper scripts
+  - `settings.gradle` : Gradle settings
+  - `gradle/` : Gradle wrapper and version catalog
+    - `libs.versions.toml` : Dependency versions
+    - `wrapper/` : Gradle wrapper files
+
+## Android Environment Setup
+
+### 1. Install Android Studio
+Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+
+### 2. Open the Project
+- Launch Android Studio.
+- Select "Open an Existing Project" and choose the `android/` directory.
+
+### 3. Build the Project
+- Let Gradle sync and download dependencies automatically.
+- If prompted, install any missing SDK components.
+
+### 4. Run the App
+- Connect an Android device or start an emulator.
+- Click the Run button (▶️) in Android Studio to build and launch the app.
+
+## Additional Notes
+- All Python code is located in the `code/` directory.
+- Data files are in the `data/` directory.
+- Model files and plots are in the `model/` and `plots/` directories respectively.
+- Android app source and configuration are in the `android/` directory.
+
+## Getting Started
+After setting up both environments and installing dependencies, you can start exploring the code and running scripts from the `code/` directory by executin main.py to run the full pipeline or execute `sms_eda_notebook.ipynb` for exploratory data analysis(EDA)
+For android application simple build and run should work fine.
+
+---
+For any issues, please refer to the documentation in `workflow.md` or contact me at 2023AA05482@wilp.bits-pilani.ac.in
